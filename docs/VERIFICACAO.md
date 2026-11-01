@@ -1,105 +1,107 @@
-# Verificação da implementação
+# Resultados da suíte automatizada
 
-Este relatório diferencia verificações executadas de cenários que ainda precisam de validação pela interface.
+Este relatório descreve as verificações executadas sobre a aplicação e distingue a cobertura automatizada dos cenários que continuam manuais. As APIs das suítes são controladas; nenhuma depende do DummyJSON real.
 
-## Executado
+## Comandos e resultados
 
-- `npm run typecheck`: aprovado com `strict: true`.
-- `npm run format:check`: aprovado.
-- `npm test`: 21 testes aprovados usando o executor nativo do Node, sem instalar outro framework de testes.
-- `npm run build`: aprovado. O MSW do navegador é carregado por importação dinâmica e permanece habilitado no build.
-- Servidor `npm run preview -- --host 127.0.0.1 --port 4173 --strictPort`: iniciado com sucesso.
-- HTTP 200 para `/`, `/produtos/api-16`, `/admin/login`, `/mercado.jpg` e `/mockServiceWorker.js` no preview, com tipos de conteúdo adequados.
-- Inspeção do asset local da capa: fotografia de hortifruti adequada à tela inicial.
+| Comando              | Resultado                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `yarn typecheck`     | Aprovado, incluindo aplicação, testes e configurações, com TypeScript strict nos testes |
+| `yarn test:run`      | 48 testes Vitest em 7 arquivos                                                          |
+| `yarn test:coverage` | 48 testes aprovados; relatórios HTML, LCOV e terminal gerados                           |
+| `yarn test:e2e`      | 3 jornadas aprovadas no Chromium, 2 workers, sem retries                                |
+| `yarn build`         | Aprovado; build normal mantém a inicialização do MSW                                    |
+| `yarn format:check`  | Verificação de estilo do código e documentação                                          |
 
-As verificações HTTP confirmam a entrega dos arquivos e o fallback das rotas da SPA; **não comprovam a execução do worker no navegador**. O worker gerado está presente em `dist/`.
+O Chromium necessário foi verificado por `yarn playwright install chromium`. O servidor dos E2E foi iniciado e encerrado automaticamente pelo Playwright em `127.0.0.1:4175/Ponto-Verde/`, sem usar uma sessão pessoal de navegador.
 
-### Integração real com o DummyJSON
+Na preparação do deploy, `yarn install --frozen-lockfile` também passou em uma pasta limpa, com o hash do lockfile preservado. As versões instaladas foram comparadas ao lockfile npm anterior antes de removê-lo.
 
-Sem registrar tokens nos logs, foram executadas:
+`yarn test:pages` aprovou mais **2 testes** sobre o build normal em `127.0.0.1:4176/Ponto-Verde/`. Foram verificados capa, favicon e worker com HTTP 200 e tipos corretos; login profundo com query/hash e HTTP 404; CPF respondido pelo MSW real; recarga de carrinho e de rota dinâmica; guards e continuação da compra. `yarn build:pages` gerou `404.html` e `.nojekyll`.
 
-| Chamada                                                    | Resultado observado                        |
-| ---------------------------------------------------------- | ------------------------------------------ |
-| `POST /auth/login` com emilys                              | Tokens recebidos                           |
-| `GET /auth/me`                                             | Usuário 1, username emilys, `role: admin`  |
-| `GET /products/category/groceries?limit=0`                 | 27 produtos                                |
-| `POST /auth/products/add`                                  | Produto fictício retornado com ID 195      |
-| `PATCH /auth/products/16`                                  | Preço temporário retornado como 2,50       |
-| `DELETE /auth/products/16`                                 | `isDeleted: true`                          |
-| `POST /carts/add` com usuário 1, produto 16 e quantidade 2 | Carrinho 209, 1 produto, total remoto 3,98 |
+## Cobertura V8
 
-Essas escritas são simulações do próprio DummyJSON e não persistem no servidor. O total remoto não é usado como total da venda local.
+Resultado de `yarn test:coverage`, no escopo declarado em `vitest.config.ts`:
 
-### Cobertura automatizada
+| Métrica    | Cobertura        |
+| ---------- | ---------------- |
+| Instruções | 63,33% (425/671) |
+| Branches   | 55,95% (216/386) |
+| Funções    | 61,45% (118/192) |
+| Linhas     | 66,26% (381/575) |
 
-`tests/regras.test.ts` verifica:
+Entre os módulos centrais, `ListaProdutos.tsx` tem 92,30% de linhas cobertas, `Carrinho.tsx` 100%, `LojaContext.tsx` 83,63% e `useLocalStorage.ts` 94,73%. Esses números não representam uma meta nem substituem a avaliação dos comportamentos.
 
-1. Centavos e arredondamento unitário de desconto.
-2. Soma sem erro de ponto flutuante.
-3. Recusa de uma segunda venda do mesmo atendimento.
-4. Inclusão de vendas de atendimentos diferentes sem mutação.
-5. Preservação dos preços do snapshot.
-6. Normalização, verificadores de CPF e rejeição de sequências repetidas.
-7. Contratos inválidos de produto, token e venda.
-8. Reaplicação de ajustes locais e exclusões no catálogo.
-9. Ajuste da sacola ao estoque e à remoção de produtos.
+O relatório V8 mede **somente a execução no Vitest**. A tela inicial e a conclusão, por exemplo, são exercitadas no Chromium pelos E2E, mas essa execução não entra nessa porcentagem. Não há exigência de cobertura global de 100%.
 
-`tests/servicos.test.ts` verifica chamadas Axios e interceptores com MSW no Node:
+Relatórios locais, gerados e ignorados pelo Git:
 
-10. Login, consulta do perfil e tokens somente no sessionStorage.
-11. Login incorreto HTTP 400 sem refresh.
-12. Recusa de perfil não administrativo.
-13. Refresh único e repetição da chamada protegida.
-14. Falha de refresh sem loop, com remoção dos tokens.
-15. Catálogo vazio válido e rejeição de resposta inválida.
-16. Mensagens distintas para rede e timeout.
-17. Carrinho misto, seleção de IDs externos e conservação do total local.
-18. POST, PATCH e DELETE protegidos de produtos.
-19. Associações de CPF, cadastro local persistido, reencontro por CPF e rejeição de duplicidade.
-20. Formulário inválido de cliente e ausência de Bearer na mockApi.
-21. Recuperação isolada de uma chave inválida, preservando as demais.
+- `coverage/index.html` e `coverage/lcov.info`.
+- `playwright-report/index.html`, aberto por `yarn test:e2e:report`.
+- Em falhas, screenshot e trace em `test-results/`.
 
-## Limite da verificação visual
+## Cenários por camada
 
-A automação de interface não chegou a iniciar o fluxo do aplicativo: o mecanismo de controle retornou interrupção por Escape ao tentar ativar uma janela minimizada. Uma nova tentativa após autorização também foi recusada pelo mesmo mecanismo. Não foram executados cliques de compra ou login no navegador. Não há evidência de teste visual, de responsividade ou de sincronização real entre duas abas nesta execução.
+### Unitários e contratos
 
-Portanto, os itens abaixo são **roteiro manual**, com cobertura parcial pelas regras e serviços automatizados quando indicada. Eles não devem ser apresentados como 23 cenários end-to-end já aprovados.
+`tests/calculos.test.ts` e `tests/regras.test.ts` cobrem:
 
-## Roteiro dos critérios de aceite
+- Carrinho vazio, quantidades e soma de produtos diferentes.
+- Desconto, arredondamento unitário em centavos e ausência de erro de ponto flutuante.
+- Participação de produtos locais e prevalência de ajustes administrativos.
+- Preservação do preço registrado no snapshot de uma venda.
+- Uma única venda por atendimento e ausência de mutação do histórico.
+- Estoque, exclusões locais, CPF e rejeição de contratos inválidos.
 
-Use `npm run build` e `npm run preview`. Abra duas abas com exatamente a mesma origem. Para uma demonstração limpa, utilize um perfil separado do navegador; não é necessário apagar os dados de outro perfil.
+### Componentes
 
-| #   | Cenário e resultado esperado                                                       | Cobertura executada                                                         |
-| --- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | Iniciar, escolher Seguir sem CPF e comprar normalmente                             | Serviços de carrinho com visitante; UI pendente                             |
-| 2   | Informar 529.982.247-25 e ver o nome do usuário 1                                  | Associação CPF/perfil testada; UI pendente                                  |
-| 3   | Cadastrar 123.456.789-09, recarregar e reencontrá-lo                               | Handler, persistência e consulta testados; recarga UI pendente              |
-| 4   | Adicionar, alterar quantidade e remover itens                                      | Regras de estoque testadas; controles UI pendentes                          |
-| 5   | Recarregar a compra e conservar cliente e itens                                    | Armazenamento validado em teste; ciclo React pendente                       |
-| 6   | Abrir /produtos/api-16 e um ID inexistente                                         | Rotas implementadas; UI pendente                                            |
-| 7   | Confirmar, separar integração HTTP e aguardar cinco segundos                       | Serviço de integração testado; temporização UI pendente                     |
-| 8   | Clicar duas vezes, recarregar durante a simulação e retomar; obter uma única venda | Unicidade e snapshot testados; Web Locks/recarga UI pendentes               |
-| 9   | Imprimir nota, ver confirmação simulada e concluir                                 | Implementado; UI pendente                                                   |
-| 10  | Enviar para e-mail válido com cliente e visitante; rejeitar inválido               | Schema implementado; fluxo UI pendente                                      |
-| 11  | Aguardar dez segundos e iniciar nova compra sem dados anteriores                   | Cleanup implementado; UI pendente                                           |
-| 12  | Tentar senha errada e ver mensagem sem refresh                                     | Automatizado no serviço                                                     |
-| 13  | Abrir /admin/produtos sem token e receber login                                    | Proteção implementada; navegação UI pendente                                |
-| 14  | Fazer login, recarregar /admin e aguardar verificação da sessão                    | Perfil/tokens testados; montagem inicial UI pendente                        |
-| 15  | Expirar access token; renovar, ou encerrar caso refresh inválido                   | Automatizado nos interceptores                                              |
-| 16  | Cadastrar, editar, excluir e recarregar produtos                                   | REST real, serviços e aplicação de ajustes testados; formulário UI pendente |
-| 17  | Alterar preço e verificar catálogo e sacola                                        | Catálogo efetivo testado; reação visual pendente                            |
-| 18  | Comparar venda antiga com produto recém-editado                                    | Automatizado no snapshot                                                    |
-| 19  | Aprovar compra e vê-la no dashboard e na preparação                                | Mesma coleção implementada; fluxo UI pendente                               |
-| 20  | Preparar/concluir e manter valores e quantidade de vendas                          | Transições implementadas; UI pendente                                       |
-| 21  | Totem e preparação em abas diferentes da mesma origem                              | Listeners e Web Locks implementados; teste em duas abas pendente            |
-| 22  | Simular falha, resposta inválida, vazio e URL de imagem inexistente                | Rede/timeout/contrato/vazio testados; fallback visual pendente              |
-| 23  | Trocar páginas nas tabelas, navegar e usar tela estreita                           | Componentes implementados; UI responsiva pendente                           |
+`tests/componentes/catalogo.test.tsx` verifica loading controlado, nomes e preços, busca por nome e código de barras, busca sem resultados, lista vazia, erro HTTP com recuperação, contrato inválido e seleção limitada ao estoque.
 
-Para forçar erros no navegador durante uma avaliação, use as ferramentas de desenvolvimento para bloquear temporariamente uma chamada ou testar uma imagem inexistente em um produto local. As falhas não devem ser apresentadas como sucesso nem substituir o catálogo por uma lista fixa.
+`tests/componentes/carrinho.test.tsx` verifica estado vazio sem avanço, itens e quantidades, total conhecido, mudança entre mínimo e estoque, remoção parcial e total e aplicação do catálogo efetivo com produto local.
 
-## Limitações conhecidas
+### Integração pública
 
-- As funcionalidades de interface precisam da rodada manual descrita acima.
-- O build emite aviso de chunk JavaScript acima de 500 kB. Isso não impede build/preview; uma evolução pode dividir as telas sob demanda.
-- A versão obrigatória de Zod possui o aviso de auditoria documentado no README. Ela não foi substituída por uma versão incompatível com a exigência acadêmica.
-- Dados, cadastro de clientes, pagamento e estoque pertencem a uma demonstração local; não há garantias de um backend comercial, nem sincronização entre computadores.
+`tests/integration/catalogoCarrinho.test.tsx` usa Context, serviços, validação e rotas reais para verificar:
+
+1. Adição de produtos diferentes e resumo na página do carrinho.
+2. Adição repetida sem duplicar linhas indevidamente.
+3. Alteração de quantidade e remoção com total atualizado.
+4. Recuperação de itens, quantidades e identificação após desmontagem e remontagem.
+
+`tests/integration/pagamento.test.tsx` verifica carregamento HTTP separado da simulação, botão bloqueado, ausência de venda até 4.999 ms, aprovação após 5.000 ms, total local e registro único. Também verifica que desmontar remove os timers e impede aprovação futura.
+
+### Serviços preservados
+
+`tests/servicos.test.ts` mantém os testes anteriores de Axios, JWT, refresh, perfil, timeout/rede, carrinho misto, operações REST, cadastro fictício e recuperação de armazenamento inválido. As simulações usam MSW no Node. Os testes foram adaptados ao executor Vitest e ao armazenamento do jsdom, sem descartar cenários relevantes.
+
+### E2E executados no Chromium
+
+| Arquivo                            | Jornada aprovada                                                                                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `e2e/compraVisitante.spec.ts`      | Início → visitante → dois arrozes e um leite → R$ 25,00 → pagamento real de cinco segundos → impressão simulada → agradecimento → retorno automático → nova compra sem CPF/itens anteriores |
+| `e2e/compraIdentificada.spec.ts`   | CPF conhecido → boas-vindas → café com desconto a R$ 7,20 → pagamento simulado → alteração do e-mail → envio simulado → conclusão                                                           |
+| `e2e/persistenciaCarrinho.spec.ts` | Visitante → itens e quantidades → carrinho → recarga da página → mesmos itens/total → retorno ao catálogo sem repetir o modal                                                               |
+
+Os testes conduzem a interface; não criam vendas diretamente no storage e não reduzem o tempo do pagamento. A rede é registrada antes da navegação e chamadas não previstas fazem o cenário falhar.
+
+## Pequenas alterações no código da aplicação
+
+- `CardProduto` e `ItemCarrinho`: artigos com nomes acessíveis para localizar cada produto semanticamente.
+- Botões de adição e remoção: nomes que incluem o produto e a ação.
+- `SeletorQuantidade`: nome do produto nos controles e `output` para a quantidade selecionada; os três consumidores foram atualizados.
+- `ResumoCompra`: seção nomeada e saídas acessíveis para subtotal, descontos e total.
+- `main.tsx`: somente `--mode e2e` dispensa o MSW, pois o Playwright controla todas as APIs e bloqueia Service Workers nesse ambiente.
+
+Nenhuma regra de preço, desconto, estoque, quantidade ou duração de pagamento foi alterada. Não foi necessário substituir contextos, introduzir um provider de negócio fictício ou reescrever a arquitetura.
+
+## Limites e cenários ainda manuais
+
+- A suíte usa somente Chromium desktop; Firefox, WebKit e uma matriz de tamanhos de tela não foram executados.
+- Os novos testes não percorrem a interface administrativa completa.
+- Concorrência e sincronização entre duas abas não são comprovadas pelos cenários atuais. O jsdom executa uma implementação sequencial mínima de Web Locks; os E2E usam o recurso real do Chromium em uma aba por teste.
+- A retomada de um pagamento interrompido por recarga não possui um E2E próprio. O teste de desmontagem comprova ausência de aprovação futura, sem afirmar que cobre toda a retomada.
+- O cadastro de cliente novo é verificado nos handlers/serviços; não há E2E específico desse formulário.
+- Os 3 E2E de jornada usam a estratégia B. Os 2 testes adicionais de Pages verificam o build normal com o MSW real e o fallback 404, em uma suíte separada. As chamadas externas continuam determinísticas nessa verificação.
+- O aviso de chunk acima de 500 kB no build e o aviso de auditoria da versão obrigatória de Zod continuam documentados no README. As dependências funcionais da aplicação não foram atualizadas para adicionar os testes.
+
+O guia [TESTES.md](TESTES.md) explica a organização, o isolamento, o tratamento dos temporizadores e como acrescentar um cenário semelhante.

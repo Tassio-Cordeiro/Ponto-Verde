@@ -31,7 +31,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <MantineProvider theme={theme}>
       <Notifications position="top-right" />
       <AvisosPersistencia />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <LojaProvider>
             <AtendimentoProvider>{children}</AtendimentoProvider>

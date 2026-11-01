@@ -50,6 +50,7 @@ export function DetalhesProduto() {
         <Text size="sm">Venda por unidade · {disponivel} disponíveis</Text>
         <Group>
           <SeletorQuantidade
+            nomeProduto={produto.nome}
             valor={Math.min(quantidade, Math.max(1, disponivel))}
             maximo={disponivel}
             aoAlterar={setQuantidade}

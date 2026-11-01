@@ -1,9 +1,8 @@
-import { after, afterEach, before, beforeEach, test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { http, HttpResponse, delay } from 'msw';
-import { setupServer } from 'msw/node';
+import { servidor } from './mocks/server.ts';
 import { api, lerTokens, salvarTokens } from '../src/services/api.ts';
-import { mockApi } from '../src/services/mockApi.ts';
 import { autenticar, buscarPerfil } from '../src/services/authService.ts';
 import {
   listarProdutos,
@@ -12,33 +11,10 @@ import {
 } from '../src/services/produtosService.ts';
 import { listarClientes, cadastrarCliente } from '../src/services/clientesService.ts';
 import { integrarCarrinho } from '../src/services/carrinhoService.ts';
-import { handlers } from '../src/mocks/handlers.ts';
 import { clienteSchema } from '../src/schemas/dominio.ts';
 import { chaveStorage, lerStorage } from '../src/utils/armazenamento.ts';
 import type { Produto, Resumo } from '../src/types/index.ts';
 
-// Armazenamento em memória apenas para testes de serviços; não controla um navegador.
-class ArmazenamentoMemoria implements Storage {
-  private valores = new Map<string, string>();
-  get length() {
-    return this.valores.size;
-  }
-  clear() {
-    this.valores.clear();
-  }
-  getItem(chave: string) {
-    return this.valores.get(chave) ?? null;
-  }
-  key(indice: number) {
-    return [...this.valores.keys()][indice] ?? null;
-  }
-  removeItem(chave: string) {
-    this.valores.delete(chave);
-  }
-  setItem(chave: string, valor: string) {
-    this.valores.set(chave, valor);
-  }
-}
 const perfil = {
   id: 1,
   username: 'emilys',
@@ -84,30 +60,6 @@ const resumo: Resumo = {
   descontos: 40,
   total: 458,
 };
-const servidor = setupServer(...handlers);
-before(() => {
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: new ArmazenamentoMemoria(),
-    configurable: true,
-  });
-  Object.defineProperty(globalThis, 'sessionStorage', {
-    value: new ArmazenamentoMemoria(),
-    configurable: true,
-  });
-  Object.defineProperty(globalThis, 'window', { value: new EventTarget(), configurable: true });
-  Object.defineProperty(globalThis, 'location', {
-    value: new URL('http://localhost/'),
-    configurable: true,
-  });
-  mockApi.defaults.baseURL = 'http://localhost/api';
-  servidor.listen({ onUnhandledRequest: 'error' });
-});
-beforeEach(() => {
-  localStorage.clear();
-  sessionStorage.clear();
-});
-afterEach(() => servidor.resetHandlers());
-after(() => servidor.close());
 
 test('login consulta o perfil, guarda tokens somente na sessão e libera apenas admin', async () => {
   servidor.use(
@@ -200,7 +152,11 @@ test('erros de rede e timeout têm mensagens diferentes', async () => {
       return HttpResponse.json({});
     }),
   );
-  await assert.rejects(() => api.get('/test-timeout', { timeout: 10 }), /demorou demais/);
+  // O XHR simulado pelo jsdom/MSW não dispara timeout; o adaptador HTTP real do Axios o faz.
+  await assert.rejects(
+    () => api.get('/test-timeout', { timeout: 10, adapter: 'http' }),
+    /demorou demais/,
+  );
 });
 test('carrinho misto envia apenas IDs externos e conserva o total local', async () => {
   servidor.use(
