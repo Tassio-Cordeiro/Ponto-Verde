@@ -3,7 +3,7 @@ import { test, expect } from './fixtures/loja.ts';
 test('visitante compra, imprime o comprovante e inicia outro atendimento limpo', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'INICIAR COMPRA' }).click();
   await page.getByRole('button', { name: 'Seguir sem CPF' }).click();
   const arroz = page.getByRole('article', { name: 'Produto Arroz' });

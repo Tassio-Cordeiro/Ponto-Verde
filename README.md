@@ -1,48 +1,73 @@
 # Ponto Verde — Mini Mercado
 
-SPA educacional de autoatendimento para um projeto de pós-graduação. O cliente escolhe produtos no totem, revisa a sacola, simula o pagamento e recebe um comprovante demonstrativo. A administração acompanha clientes, catálogo, vendas e preparação dos pedidos.
-
-**Não há cobrança, emissão fiscal, envio de e-mail nem impressão reais.** O projeto funciona localmente e não configura hospedagem.
+O projeto é um software de autoatendimento de mercado, onde o cliente escolhe produtos no totem, revisa a sacola, simula o pagamento e recebe um comprovante demonstrativo (simulado, não é gerado). A administração, com acesso remoto, acompanha clientes, catálogo, vendas e preparação dos pedidos.
 
 ## Executar
 
-Requisitos: **Node.js 24 ou superior**, npm, internet para o DummyJSON e um navegador atualizado com Service Workers e Web Locks. Abra em `localhost` ou `127.0.0.1`; fora desses endereços, Service Workers exigem HTTPS.
+Requisitos: **Node.js 24.x**, **Yarn Classic 1.22.22**, internet para o DummyJSON e um navegador atualizado com Service Workers e Web Locks. A versão do Node está em `.nvmrc`. Fora de localhost ou 127.0.0.1, Service Workers exigem HTTPS.
+
+Instale explicitamente a versão do gerenciador (npm é usado somente nesta instalação):
+
+```bash
+npm install --global yarn@1.22.22
+yarn --version
+```
 
 Na pasta do projeto:
 
 ```bash
-npm ci
-npm run dev
+yarn install --frozen-lockfile
+yarn dev
 ```
 
-Abra o endereço informado pelo Vite. Para testar a versão compilada:
+Abra `http://localhost:5173/Ponto-Verde/`, ou o endereço informado pelo Vite. Para testar a versão compilada:
 
 ```bash
-npm run typecheck
-npm run test:run
-npm run build
-npm run preview
+yarn typecheck
+yarn test:run
+yarn build
+yarn preview
 ```
 
-O preview usa normalmente `http://localhost:4173`. Use **o mesmo endereço exato em todas as abas**. `localhost:5173` e `localhost:4173`, por exemplo, possuem dados diferentes.
+O preview usa normalmente `http://localhost:4173/Ponto-Verde/`. Use **a mesma origem exata em todas as abas**. `localhost:5173` e `localhost:4173`, por exemplo, possuem dados diferentes.
 
-| Comando                   | Finalidade                                          |
-| ------------------------- | --------------------------------------------------- |
-| `npm run dev`             | Servidor de desenvolvimento                         |
-| `npm run typecheck`       | Verificação TypeScript com `strict`                 |
-| `npm test`                | Vitest em modo de desenvolvimento (watch)           |
-| `npm run test:run`        | Testes unitários, componentes e integração, uma vez |
-| `npm run test:coverage`   | Execução com relatório de cobertura V8              |
-| `npm run test:e2e`        | Jornada pública no Chromium com Playwright          |
-| `npm run test:e2e:ui`     | Interface interativa do Playwright                  |
-| `npm run test:e2e:report` | Abrir o relatório HTML do Playwright                |
-| `npm run build`           | Verificação de tipos e geração de `dist/`           |
-| `npm run preview`         | Servir o build localmente, incluindo o MSW          |
-| `npm run format`          | Formatar o código para estudo                       |
-| `npm run format:check`    | Verificar a formatação                              |
-| `npm run lint`            | Executar o Oxlint da base do projeto                |
+| Comando                | Finalidade                                          |
+| ---------------------- | --------------------------------------------------- |
+| `yarn dev`             | Servidor de desenvolvimento                         |
+| `yarn typecheck`       | Verificação TypeScript com `strict`                 |
+| `yarn test`            | Vitest em modo de desenvolvimento (watch)           |
+| `yarn test:run`        | Testes unitários, componentes e integração, uma vez |
+| `yarn test:coverage`   | Execução com relatório de cobertura V8              |
+| `yarn test:e2e`        | Jornada pública no Chromium com Playwright          |
+| `yarn test:e2e:ui`     | Interface interativa do Playwright                  |
+| `yarn test:e2e:report` | Abrir o relatório HTML do Playwright                |
+| `yarn build`           | Verificação de tipos e geração de `dist/`           |
+| `yarn preview`         | Servir o build localmente, incluindo o MSW          |
+| `yarn format`          | Formatar o código para estudo                       |
+| `yarn format:check`    | Verificar a formatação                              |
+| `yarn lint`            | Executar o Oxlint da base do projeto                |
 
-O arquivo `public/mockServiceWorker.js` está versionado. Se a versão do MSW for alterada, atualize-o com `npx msw init public --save` e revise o lockfile. A inicialização aguarda o worker **em desenvolvimento e no preview**, antes de renderizar o React.
+O arquivo `public/mockServiceWorker.js` está versionado. Se a versão do MSW for alterada, atualize-o com `yarn msw init public --save` e revise o lockfile. A inicialização aguarda o worker **em desenvolvimento, preview e produção**, antes de renderizar o React.
+
+## CI/CD e GitHub Pages
+
+Destino da publicação: [Ponto Verde no GitHub Pages](https://tassio-cordeiro.github.io/Ponto-Verde/).
+
+O workflow [CI e CD](https://github.com/Tassio-Cordeiro/Ponto-Verde/actions/workflows/ci-cd.yml) executa `qualidade` e `e2e` nos pushes das branches e nos Pull Requests para a `main`. O job `publicacao` depende dos dois e só publica um push na `main`, usando o mesmo commit validado e um build normal, com MSW ativo.
+
+```bash
+yarn install --frozen-lockfile
+yarn typecheck
+yarn test:coverage
+yarn playwright install chromium
+yarn test:e2e
+yarn test:pages
+yarn build:pages
+```
+
+`yarn build:pages` gera o build e copia `index.html` para `404.html`. `yarn test:pages` verifica o build normal em um servidor que reproduz o status 404 do Pages nas rotas profundas, com o Service Worker ativo. Esses testes complementam os E2E determinísticos em modo `e2e`.
+
+Veja [docs/DEPLOY.md](docs/DEPLOY.md) para entender Node/Yarn, lockfile congelado, jobs, base/basename, fallback 404, MSW, proteção da main e o fluxo branch → PR → checks → merge → deploy.
 
 ## Acesso de demonstração
 
@@ -63,7 +88,7 @@ O nome e o e-mail desses clientes são carregados de `/users/:id`. Não consulta
 
 ## Tecnologias e versões
 
-Todas as dependências diretas estão fixadas em `package.json`; o `package-lock.json` deve ser mantido.
+Todas as dependências diretas estão fixadas em `package.json`; o `yarn.lock` deve ser mantido. O gerenciador adotado é Yarn Classic 1.22.22, indicado em `packageManager`.
 
 | Tecnologia                                  | Versão          |
 | ------------------------------------------- | --------------- |
@@ -288,22 +313,22 @@ Origem da fotografia: [imagem de mercado no Unsplash](https://images.unsplash.co
 7. Edite o preço de um produto e mostre a mudança no catálogo/sacola e a preservação dos preços de vendas antigas.
 8. Cadastre um produto local e explique por que ele tem UUID, enquanto a parcela enviada a `/carts/add` usa IDs externos.
 9. Abra um serviço, seu schema e o componente consumidor para explicar o caminho dos dados.
-10. Execute `npm run test:run`, `npm run test:e2e`, `npm run typecheck` e `npm run build`. Mostre um teste de integração e uma jornada no navegador.
+10. Execute `yarn test:run`, `yarn test:e2e`, `yarn typecheck` e `yarn build`. Mostre um teste de integração e uma jornada no navegador.
 
 ## Testes automatizados
 
 A suíte prioriza catálogo, pesquisa, quantidade, Context, carrinho e persistência. Os testes existentes foram migrados para Vitest, preservando a cobertura de serviços e regras. Mantine e Zod mantêm suas versões originais.
 
 ```bash
-npm ci
-npx playwright install chromium
-npm run typecheck
-npm run test:run
-npm run test:coverage
-npm run test:e2e
+yarn install --frozen-lockfile
+yarn playwright install chromium
+yarn typecheck
+yarn test:run
+yarn test:coverage
+yarn test:e2e
 ```
 
-`npm test` acompanha alterações em modo watch. A cobertura HTML está em `coverage/index.html`; `npm run test:e2e:report` abre o relatório do navegador. Nenhuma suíte depende da disponibilidade do DummyJSON real.
+`yarn test` acompanha alterações em modo watch. A cobertura HTML está em `coverage/index.html`; `yarn test:e2e:report` abre o relatório do navegador. Nenhuma suíte depende da disponibilidade do DummyJSON real.
 
 - **Unitários:** regras puras de centavos, descontos, catálogo efetivo e unicidade de vendas.
 - **Componentes:** RTL verifica o que aparece e o resultado de cliques e digitação com `user-event`.

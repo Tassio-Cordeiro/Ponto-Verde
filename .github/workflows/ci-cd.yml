@@ -1,0 +1,122 @@
+name: CI e CD
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Execuções de branches/PRs diferentes não se cancelam entre si.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  qualidade:
+    name: qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Obter o commit validado
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Configurar Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Instalar Yarn Classic explicitamente
+        run: npm install --global yarn@1.22.22
+      - name: Instalar dependências sem alterar o lockfile
+        run: yarn install --frozen-lockfile
+      - name: Verificar tipos
+        run: yarn typecheck
+      - name: Executar Vitest e gerar cobertura
+        run: yarn test:coverage
+      - name: Guardar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cobertura-${{ github.run_id }}-${{ github.run_attempt }}
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: warn
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Obter o mesmo commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Configurar Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Instalar Yarn Classic explicitamente
+        run: npm install --global yarn@1.22.22
+      - name: Instalar dependências congeladas
+        run: yarn install --frozen-lockfile
+      - name: Instalar Chromium e bibliotecas do sistema
+        run: yarn playwright install --with-deps chromium
+      - name: Percorrer a jornada pública no subdiretório
+        run: yarn test:e2e
+      - name: Verificar build normal, MSW e fallback real de Pages
+        run: yarn test:pages
+      - name: Guardar relatórios, screenshots e traces
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: navegador-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+            playwright-pages-report/
+            test-results-pages/
+          retention-days: 14
+          if-no-files-found: warn
+
+  publicacao:
+    name: publicacao
+    needs: [qualidade, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Obter exatamente o commit aprovado pelos jobs anteriores
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Configurar Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Instalar Yarn Classic explicitamente
+        run: npm install --global yarn@1.22.22
+      - name: Instalar dependências congeladas
+        run: yarn install --frozen-lockfile
+      - name: Gerar build normal e preparar 404.html
+        run: yarn build:pages
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Enviar somente o build de produção
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+      - name: Publicar no Pages
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

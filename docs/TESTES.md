@@ -17,32 +17,32 @@ A prioridade é o caminho que o cliente usa: encontrar produtos, escolher quanti
 
 ## Instalação e comandos
 
-Use Node.js 24 ou superior e as versões fixadas no lockfile:
+Use Node.js 24.x, Yarn Classic 1.22.22 e as versões fixadas no lockfile:
 
 ```bash
-npm ci
-npx playwright install chromium
+yarn install --frozen-lockfile
+yarn playwright install chromium
 ```
 
 A instalação do Chromium é necessária na primeira execução ou quando a versão do Playwright mudar. O comando é compatível com Windows. A suíte E2E não usa nem altera sua sessão pessoal do Chrome.
 
 ```bash
-npm test
-npm run test:run
-npm run test:coverage
-npm run test:e2e
-npm run test:e2e:ui
-npm run test:e2e:report
+yarn test
+yarn test:run
+yarn test:coverage
+yarn test:e2e
+yarn test:e2e:ui
+yarn test:e2e:report
 ```
 
-`npm test` fica observando alterações. `test:run` executa uma vez e termina. Para executar um arquivo específico:
+`yarn test` fica observando alterações. `test:run` executa uma vez e termina. Para executar um arquivo específico:
 
 ```bash
-npm run test:run -- tests/integration/catalogoCarrinho.test.tsx
-npm run test:e2e -- e2e/compraVisitante.spec.ts
+yarn test:run -- tests/integration/catalogoCarrinho.test.tsx
+yarn test:e2e -- e2e/compraVisitante.spec.ts
 ```
 
-`npm run typecheck` também verifica os testes e as configurações por meio de `tsconfig.tests.json`. O Vitest encontra somente `tests/**/*.test.ts(x)`; o Playwright encontra somente `e2e/**/*.spec.ts`. Um executor não tenta interpretar os arquivos do outro.
+`yarn typecheck` também verifica os testes e as configurações por meio de `tsconfig.tests.json`. O Vitest encontra somente `tests/**/*.test.ts(x)`; o Playwright encontra somente `e2e/**/*.spec.ts`. Um executor não tenta interpretar os arquivos do outro.
 
 ## Fixtures previsíveis
 
@@ -53,7 +53,7 @@ npm run test:e2e -- e2e/compraVisitante.spec.ts
 - Café solúvel: R$ 8,00, com 10% de desconto; preço final R$ 7,20; estoque 2.
 - Pão exclusivamente local: R$ 3,50; estoque 2, usado em regras e carrinho.
 
-Os produtos HTTP usam IDs e títulos compreendidos pelo adaptador real (`Rice`, `Milk`, `Nescafe Coffee`). A resposta tem `products`, `total`, `skip` e `limit`. Os dados internos possuem `precoCentavos`, ID interno e ID externo quando aplicável. As imagens usam `/favicon.svg`, um arquivo local.
+Os produtos HTTP usam IDs e títulos compreendidos pelo adaptador real (`Rice`, `Milk`, `Nescafe Coffee`). A resposta tem `products`, `total`, `skip` e `limit`. Os dados internos possuem `precoCentavos`, ID interno e ID externo quando aplicável. As imagens usam `/Ponto-Verde/favicon.svg`, um arquivo local.
 
 `tests/fixtures/clientes.ts` contém somente dados sintéticos: Ana de Teste, CPF fictício `52998224725` e e-mail `ana@example.com`. O atendimento visitante de teste tem uma identificação explícita, sem simular um cliente real.
 
@@ -141,7 +141,7 @@ Como jsdom não implementa Web Locks, o setup executa a tarefa sequencialmente n
 
 A estratégia escolhida é a **opção B**:
 
-1. O Playwright executa `npm run dev:e2e`, em `127.0.0.1:4175`.
+1. O Playwright executa `yarn dev:e2e`, em `127.0.0.1:4175/Ponto-Verde/`.
 2. Vite usa `--mode e2e`; somente nesse modo `main.tsx` deixa de iniciar o MSW.
 3. O contexto bloqueia Service Workers.
 4. `e2e/fixtures/loja.ts` registra as respostas antes de `page.goto`.
@@ -153,7 +153,7 @@ As simulações mantêm os tempos reais: cinco segundos de pagamento, impressão
 
 ## Relatórios e cobertura
 
-Depois de `npm run test:coverage`:
+Depois de `yarn test:coverage`:
 
 - `coverage/index.html`: relatório navegável por arquivo e linha.
 - `coverage/lcov.info`: formato consumido por editores e ferramentas de análise.
@@ -161,7 +161,7 @@ Depois de `npm run test:coverage`:
 
 A configuração inclui regras, serviços, schemas, contextos, hooks, componentes e páginas públicas e rotas. A porcentagem descreve **esse escopo**, não toda a aplicação. Não existe meta global de 100%. Use as linhas sem cobertura para localizar comportamentos relevantes ainda não exercitados; porcentagem alta, isoladamente, não prova que os resultados esperados são corretos.
 
-Depois de `npm run test:e2e`, execute `npm run test:e2e:report`. Em caso de falha, o Playwright mantém screenshot e trace em `test-results/`. O trace permite acompanhar ações e requisições; o relatório fornece o caminho para abri-lo. Esses relatórios e `coverage/` estão no `.gitignore`.
+Depois de `yarn test:e2e`, execute `yarn test:e2e:report`. Em caso de falha, o Playwright mantém screenshot e trace em `test-results/`. O trace permite acompanhar ações e requisições; o relatório fornece o caminho para abri-lo. Esses relatórios e `coverage/` estão no `.gitignore`.
 
 ## Acrescentar um teste semelhante
 
@@ -173,4 +173,6 @@ Depois de `npm run test:e2e`, execute `npm run test:e2e:report`. Em caso de falh
 6. Verifique o resultado pela interface. Inspecione o armazenamento quando persistência ou registro da venda forem o objeto do teste.
 7. Execute o arquivo, a suíte correspondente e a verificação de tipos.
 
-Os cenários e resultados efetivamente executados estão em [VERIFICACAO.md](VERIFICACAO.md). A área administrativa completa, sincronização concorrente entre abas, todos os tamanhos de tela e o worker de navegador no preview não são comprovados por estes três E2E.
+Além dos três E2E, `yarn test:pages` usa `playwright.pages.config.ts`, o build normal e um servidor estático que responde rotas profundas com `404.html` e status 404. Os dois testes em `pages-tests/` mantêm o MSW ativo e verificam assets, CPF pelo worker, login, carrinho e rota dinâmica no subdiretório. Somente as chamadas externas que passam pelo worker recebem fixtures; `/api/clientes` não é interceptado pelo Playwright. Veja [DEPLOY.md](DEPLOY.md).
+
+Os cenários e resultados efetivamente executados estão em [VERIFICACAO.md](VERIFICACAO.md). A área administrativa completa, sincronização concorrente entre abas e todos os tamanhos de tela não são comprovados por estas suítes.

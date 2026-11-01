@@ -11,15 +11,15 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:4175',
+    baseURL: 'http://127.0.0.1:4175/Ponto-Verde/',
     serviceWorkers: 'block',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev:e2e',
-    url: 'http://127.0.0.1:4175',
+    command: 'yarn dev:e2e',
+    url: 'http://127.0.0.1:4175/Ponto-Verde/',
     reuseExistingServer: false,
     timeout: 60_000,
   },

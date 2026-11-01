@@ -3,7 +3,7 @@ import { test, expect } from './fixtures/loja.ts';
 test('cliente identificado compra com desconto e recebe o comprovante por e-mail simulado', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'INICIAR COMPRA' }).click();
   await page.getByRole('textbox', { name: 'CPF', exact: true }).fill('52998224725');
   await page.getByRole('button', { name: 'Continuar com CPF' }).click();

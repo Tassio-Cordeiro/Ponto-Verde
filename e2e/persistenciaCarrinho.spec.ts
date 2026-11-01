@@ -3,7 +3,7 @@ import { test, expect } from './fixtures/loja.ts';
 test('recarregar a sacola preserva itens, quantidades e a escolha de visitante', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'INICIAR COMPRA' }).click();
   await page.getByRole('button', { name: 'Seguir sem CPF' }).click();
   await expect(page.getByRole('article', { name: 'Produto Arroz' })).toBeVisible();

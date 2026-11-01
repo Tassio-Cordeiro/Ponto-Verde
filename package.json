@@ -3,12 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": ">=24.0.0"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pages": "yarn build && node scripts/prepare-pages.mjs",
+    "serve:pages": "node scripts/serve-pages.mjs",
+    "test:pages": "playwright test --config playwright.pages.config.ts",
     "lint": "oxlint",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
@@ -19,8 +23,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "dev:e2e": "vite --mode e2e --host 127.0.0.1 --port 4175 --strictPort",
-    "format": "prettier --write src tests e2e README.md docs package.json index.html *config*.ts",
-    "format:check": "prettier --check src tests e2e README.md docs package.json index.html *config*.ts"
+    "format": "prettier --write src tests e2e pages-tests scripts .github README.md docs package.json index.html *config*.ts",
+    "format:check": "prettier --check src tests e2e pages-tests scripts .github README.md docs package.json index.html *config*.ts"
   },
   "dependencies": {
     "@mantine/core": "8.3.18",

@@ -4,20 +4,24 @@ Este relatório descreve as verificações executadas sobre a aplicação e dist
 
 ## Comandos e resultados
 
-| Comando                 | Resultado                                                                               |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| `npm run typecheck`     | Aprovado, incluindo aplicação, testes e configurações, com TypeScript strict nos testes |
-| `npm run test:run`      | 48 testes Vitest em 7 arquivos                                                          |
-| `npm run test:coverage` | 48 testes aprovados; relatórios HTML, LCOV e terminal gerados                           |
-| `npm run test:e2e`      | 3 jornadas aprovadas no Chromium, 2 workers, sem retries                                |
-| `npm run build`         | Aprovado; build normal mantém a inicialização do MSW                                    |
-| `npm run format:check`  | Verificação de estilo do código e documentação                                          |
+| Comando              | Resultado                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `yarn typecheck`     | Aprovado, incluindo aplicação, testes e configurações, com TypeScript strict nos testes |
+| `yarn test:run`      | 48 testes Vitest em 7 arquivos                                                          |
+| `yarn test:coverage` | 48 testes aprovados; relatórios HTML, LCOV e terminal gerados                           |
+| `yarn test:e2e`      | 3 jornadas aprovadas no Chromium, 2 workers, sem retries                                |
+| `yarn build`         | Aprovado; build normal mantém a inicialização do MSW                                    |
+| `yarn format:check`  | Verificação de estilo do código e documentação                                          |
 
-O Chromium necessário foi verificado por `npx playwright install chromium`. O servidor dos E2E foi iniciado e encerrado automaticamente pelo Playwright em `127.0.0.1:4175`, sem usar uma sessão pessoal de navegador.
+O Chromium necessário foi verificado por `yarn playwright install chromium`. O servidor dos E2E foi iniciado e encerrado automaticamente pelo Playwright em `127.0.0.1:4175/Ponto-Verde/`, sem usar uma sessão pessoal de navegador.
+
+Na preparação do deploy, `yarn install --frozen-lockfile` também passou em uma pasta limpa, com o hash do lockfile preservado. As versões instaladas foram comparadas ao lockfile npm anterior antes de removê-lo.
+
+`yarn test:pages` aprovou mais **2 testes** sobre o build normal em `127.0.0.1:4176/Ponto-Verde/`. Foram verificados capa, favicon e worker com HTTP 200 e tipos corretos; login profundo com query/hash e HTTP 404; CPF respondido pelo MSW real; recarga de carrinho e de rota dinâmica; guards e continuação da compra. `yarn build:pages` gerou `404.html` e `.nojekyll`.
 
 ## Cobertura V8
 
-Resultado de `npm run test:coverage`, no escopo declarado em `vitest.config.ts`:
+Resultado de `yarn test:coverage`, no escopo declarado em `vitest.config.ts`:
 
 | Métrica    | Cobertura        |
 | ---------- | ---------------- |
@@ -33,7 +37,7 @@ O relatório V8 mede **somente a execução no Vitest**. A tela inicial e a conc
 Relatórios locais, gerados e ignorados pelo Git:
 
 - `coverage/index.html` e `coverage/lcov.info`.
-- `playwright-report/index.html`, aberto por `npm run test:e2e:report`.
+- `playwright-report/index.html`, aberto por `yarn test:e2e:report`.
 - Em falhas, screenshot e trace em `test-results/`.
 
 ## Cenários por camada
@@ -97,7 +101,7 @@ Nenhuma regra de preço, desconto, estoque, quantidade ou duração de pagamento
 - Concorrência e sincronização entre duas abas não são comprovadas pelos cenários atuais. O jsdom executa uma implementação sequencial mínima de Web Locks; os E2E usam o recurso real do Chromium em uma aba por teste.
 - A retomada de um pagamento interrompido por recarga não possui um E2E próprio. O teste de desmontagem comprova ausência de aprovação futura, sem afirmar que cobre toda a retomada.
 - O cadastro de cliente novo é verificado nos handlers/serviços; não há E2E específico desse formulário.
-- Os E2E usam a estratégia B, com o MSW desabilitado somente no modo `e2e`; portanto não verificam a ativação do Service Worker no preview normal. O build e o worker permanecem disponíveis para essa verificação manual.
+- Os 3 E2E de jornada usam a estratégia B. Os 2 testes adicionais de Pages verificam o build normal com o MSW real e o fallback 404, em uma suíte separada. As chamadas externas continuam determinísticas nessa verificação.
 - O aviso de chunk acima de 500 kB no build e o aviso de auditoria da versão obrigatória de Zod continuam documentados no README. As dependências funcionais da aplicação não foram atualizadas para adicionar os testes.
 
 O guia [TESTES.md](TESTES.md) explica a organização, o isolamento, o tratamento dos temporizadores e como acrescentar um cenário semelhante.
