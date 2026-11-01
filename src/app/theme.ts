@@ -1,0 +1,40 @@
+import {
+  createTheme,
+  Button,
+  Paper,
+  TextInput,
+  PasswordInput,
+  NumberInput,
+  Select,
+  Textarea,
+} from '@mantine/core';
+export const theme = createTheme({
+  primaryColor: 'verde',
+  primaryShade: 7,
+  defaultRadius: 'md',
+  colors: {
+    verde: [
+      '#eff8f0',
+      '#dceedd',
+      '#b8dcb9',
+      '#91ca94',
+      '#6fba73',
+      '#54aa5b',
+      '#42964b',
+      '#237348',
+      '#195d3b',
+      '#104a30',
+    ],
+  },
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
+  headings: { fontFamily: "'Segoe UI', system-ui, sans-serif", fontWeight: '700' },
+  components: {
+    Button: Button.extend({ defaultProps: { size: 'md', radius: 'md' } }),
+    Paper: Paper.extend({ defaultProps: { radius: 'lg' } }),
+    TextInput: TextInput.extend({ defaultProps: { size: 'md' } }),
+    PasswordInput: PasswordInput.extend({ defaultProps: { size: 'md' } }),
+    NumberInput: NumberInput.extend({ defaultProps: { size: 'md' } }),
+    Select: Select.extend({ defaultProps: { size: 'md' } }),
+    Textarea: Textarea.extend({ defaultProps: { size: 'md' } }),
+  },
+});

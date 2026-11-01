@@ -1,0 +1,129 @@
+.pagina {
+  min-height: 100svh;
+  position: relative;
+  isolation: isolate;
+  color: white;
+  background: #163e2c;
+}
+.pagina::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url('/mercado.jpg') center 57% / cover;
+}
+.pagina::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 37, 24, 0.97) 0%,
+      rgba(8, 37, 24, 0.88) 32%,
+      rgba(8, 37, 24, 0.35) 77%,
+      rgba(8, 37, 24, 0.24)
+    ),
+    linear-gradient(0deg, rgba(8, 37, 24, 0.65), transparent 35%);
+}
+.conteudo {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-inline: 40px;
+}
+.cabecalho {
+  padding-block: 32px;
+}
+.principal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-block: 60px 75px;
+}
+.titulo {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: clamp(54px, 5.8vw, 83px);
+  letter-spacing: -3px;
+  line-height: 1.06;
+}
+.descricao {
+  color: #e0e9df;
+  font-size: 20px;
+  line-height: 1.7;
+}
+.iniciar {
+  align-self: flex-start;
+  border: 2px solid white;
+  background: #2c8550;
+  min-height: 68px;
+  padding-inline: 34px;
+  font-size: 16px;
+  letter-spacing: 1.1px;
+  margin-top: 6px;
+}
+.iniciar:hover {
+  background: #389e61;
+}
+.ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cce5a9;
+}
+.beneficios {
+  color: #c0d1c3;
+  margin-top: 12px;
+}
+.rodape {
+  padding-block: 24px;
+  color: #d8e5d7;
+  border-top: 1px solid #ffffff26;
+}
+.etiqueta {
+  position: absolute;
+  right: 7%;
+  bottom: 25%;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: #143e29;
+  background: #f8f7ecef;
+  padding: 20px 26px;
+  border-radius: 16px;
+  transform: rotate(-4deg);
+  box-shadow: 0 8px 40px #0002;
+}
+@media (max-width: 900px) {
+  .etiqueta {
+    display: none;
+  }
+  .pagina::after {
+    background: linear-gradient(90deg, #082518ed, #08251888);
+  }
+}
+@media (max-width: 550px) {
+  .conteudo {
+    padding-inline: 22px;
+  }
+  .cabecalho {
+    padding-block: 22px;
+  }
+  .titulo {
+    letter-spacing: -2px;
+  }
+  .descricao {
+    font-size: 17px;
+  }
+  .principal {
+    padding-block: 40px 55px;
+  }
+  .beneficios {
+    gap: 12px;
+  }
+  .rodape {
+    align-items: center;
+  }
+}
