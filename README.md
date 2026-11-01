@@ -339,4 +339,4 @@ O helper `tests/renderComProviders.tsx` reúne Mantine, MemoryRouter e os provid
 
 No modo **`e2e`**, o `main.tsx` não inicia o worker. O Playwright bloqueia Service Workers e instala as respostas HTTP antes da navegação. Nos modos normais, o MSW continua funcionando em desenvolvimento e build/preview. O servidor E2E é iniciado e encerrado pelo próprio Playwright.
 
-Veja [docs/TESTES.md](docs/TESTES.md) para a explicação educacional, um exemplo comentado, isolamento, temporizadores, fixtures, relatórios e como acrescentar cenários. Os resultados executados e os limites de cobertura estão em [docs/VERIFICACAO.md](docs/VERIFICACAO.md).
+
