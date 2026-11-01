@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { calcularResumo, descontoUnitario, moeda } from '../src/utils/moeda.ts';
 import { normalizarCpf, validarCpf } from '../src/utils/cpf.ts';
@@ -34,7 +34,7 @@ const venda: Venda = {
   id: 'venda-1',
   atendimentoId: 'atendimento-1',
   numero: 'PV-0001',
-  data: new Date().toISOString(),
+  data: '2026-10-01T12:00:00.000Z',
   cliente: null,
   pagamento: 'aprovado',
   preparacao: 'aguardando',

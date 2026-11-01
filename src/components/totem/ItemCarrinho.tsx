@@ -8,7 +8,7 @@ import { useLoja } from '../../hooks/useLoja.ts';
 export function ItemCarrinho({ produto, quantidade }: { produto: Produto; quantidade: number }) {
   const { alterarQuantidade } = useLoja();
   return (
-    <Paper withBorder p="md">
+    <Paper component="article" aria-label={`Item ${produto.nome} no carrinho`} withBorder p="md">
       <Group justify="space-between" gap="md">
         <Group wrap="nowrap">
           <Box w={75} miw={75}>
@@ -28,6 +28,7 @@ export function ItemCarrinho({ produto, quantidade }: { produto: Produto; quanti
         </Group>
         <Group>
           <SeletorQuantidade
+            nomeProduto={produto.nome}
             valor={quantidade}
             maximo={produto.estoque}
             aoAlterar={(q) => alterarQuantidade(produto.id, q)}
@@ -39,7 +40,7 @@ export function ItemCarrinho({ produto, quantidade }: { produto: Produto; quanti
             color="red"
             variant="subtle"
             size={44}
-            aria-label={`Remover ${produto.nome}`}
+            aria-label={`Remover ${produto.nome} do carrinho`}
             onClick={() => alterarQuantidade(produto.id, 0)}
           >
             <IconTrash size={20} />

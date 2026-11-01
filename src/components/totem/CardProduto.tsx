@@ -12,7 +12,14 @@ export function CardProduto({ produto }: { produto: Produto }) {
   const naSacola = carrinho.find((item) => item.produtoId === produto.id)?.quantidade ?? 0;
   const disponivel = Math.max(0, produto.estoque - naSacola);
   return (
-    <Card withBorder padding="md" radius="lg" className="produto-card">
+    <Card
+      component="article"
+      aria-label={`Produto ${produto.nome}`}
+      withBorder
+      padding="md"
+      radius="lg"
+      className="produto-card"
+    >
       <Card.Section className="produto-imagem">
         <Anchor
           component={Link}
@@ -64,11 +71,13 @@ export function CardProduto({ produto }: { produto: Produto }) {
       </Stack>
       <Group justify="space-between" mt="md" gap={8} wrap="nowrap">
         <SeletorQuantidade
+          nomeProduto={produto.nome}
           valor={Math.min(quantidade, Math.max(1, disponivel))}
           maximo={disponivel}
           aoAlterar={setQuantidade}
         />
         <Button
+          aria-label={`Adicionar ${produto.nome} ao carrinho`}
           px={14}
           size="sm"
           h={44}

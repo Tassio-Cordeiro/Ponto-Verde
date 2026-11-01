@@ -11,13 +11,16 @@ async function inicializar() {
   if (!elemento) throw new Error('Elemento de montagem da aplicação não encontrado.');
   const raiz = createRoot(elemento);
   try {
-    // A API de clientes faz parte da aplicação, inclusive no build/preview.
-    const { worker } = await import('./mocks/browser.ts');
-    await worker.start({
-      onUnhandledRequest: 'bypass',
-      quiet: true,
-      serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
-    });
+    // No E2E, o Playwright controla toda a fronteira HTTP e bloqueia Service Workers.
+    // Nos demais modos, a API de clientes continua ativa, inclusive no build/preview.
+    if (import.meta.env.MODE !== 'e2e') {
+      const { worker } = await import('./mocks/browser.ts');
+      await worker.start({
+        onUnhandledRequest: 'bypass',
+        quiet: true,
+        serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
+      });
+    }
     raiz.render(
       <StrictMode>
         <App />
